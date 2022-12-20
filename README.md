@@ -588,7 +588,7 @@ Parmi les standards de Kotlin, on retrouve plusieurs fonctions qui ont pour seul
 
 L'objet est disponible en tant que récepteur ``this`` et il se retourne lui-même.
 Utilisé dans la configuration d'un objet.
-```
+```kotlin
 data class Product(
     val name: String,
     val quantity: Int,
