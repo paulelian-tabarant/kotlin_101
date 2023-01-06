@@ -44,7 +44,112 @@ val derivedString: String = nullableString ?: "default_string"
 ```
 Si `nullableString` est `null`, `derivedString` vaudra `"defaultString"`. Sinon, c'est la valeur de `nullableString` qui sera lue. C'est l'**Elvis operator** (`?:`).
 
-### Fonction
+### Itérer sur des collections
+
+#### map
+
+À la sauce Kotlin
+
+```kotlin
+val products: List<Product> = productsRepository.findAll()
+// Retrieve every product label
+val productLabels = products.map { it.label }
+```
+
+#### flatMap
+
+```kotlin
+val products: List<Product> = productsRepository.findAll()
+// Retrieve all variants inside products
+val variants = products.flatMap { it.variants }
+```
+
+#### filter
+
+```kotlin
+val products: List<Product> = productsRepository.findAll()
+// Retrieve products which have at least one variant
+val productsWithVariants = products.filter { !it.variants.isEmpty() }
+```
+
+### Opérateurs sur des collections
+
+#### plus
+
+Aggréger deux listes avec des éléments du même type
+
+```kotlin
+val footballMailingList = listOf("liza@edf.fr", "f.barthez@edf.fr")
+val pantheonMailingList = listOf(
+    "jeremy.bouhi@octo.com",
+    "simon.masliah@octo.com",
+    "r.girard@octo.com",
+    "quentin.mino@octo.com",
+    "valentin.alves@octo.com"
+)
+
+val aggregatedList = footballMailingList.plus(pantheonMailingList)
+// ["liza@edf.fr", "f.barthez@edf.fr", "jeremy.bouhi@octo.com", "simon.masliah@octo.com", "r.girard@octo.com", "quentin.mino@octo.com", "valentin.alves@octo.com"]
+```
+
+#### groupBy
+
+Générer un dictionnaire / une map à partir d'une liste d'objet, en prenant comme clé celle spécifiée en paramètres (`it`
+se réfère à chaque item pour pouvoir définir une clé unique)
+
+```kotlin
+data class Pokemon(val name: String, val attacks: List<Attack>, val healthPoints: Double) {
+    fun hit(val power: Double) = healthPoints -= power
+}
+
+val deck: List<Pokemon> = pokemonDeckProvider.getRandom()
+// Pokemon("Charmander"), Pokemon("Butterfree"), Pokemon("Sandslash")
+
+fun hitPokemon(name: String, deck: List<Pokemon>, power: Double) {
+    val deckByName = deck.groupBy { it.name }
+    /*
+    {
+        "Charmander" -> Pokemon("Charmander", ...),
+        "Butterfree" -> Pokemon("Butterfree", ...),
+        "Sandslash" -> Pokemon("Sandslash", ...)
+    }
+    */
+    deckByName[name].hit(20.0)
+}
+
+hitPokemon("Sandlash", deck, 20.0)
+```
+
+#### fold / reduce
+
+Opérateur d'aggrégation : accumuler tous les éléments d'une liste pour aboutir à un seul et unique résultat. On spécifie
+l'opération à effectuer entre les éléments de la liste (et la valeur initiale pour `fold()`, si nécessaire) en paramètre
+
+```kotlin
+data class Pokemon(val name: String, val healthPoints: Int)
+data class PokemonStatistics(val maxHealth: Int, val shortestName: String)
+
+val deck: List<Pokemon> = pokemonDeckProvider.getRandom()
+// Pokemon("Charmander", 130), Pokemon("Ho-Oh", 90), Pokemon("Sandslash", 70)
+val statistics = deck.fold(
+    PokemonStatistics(maxHealth = 0.0, shortestName = "arbitrary_very_long_stringgggggggg")
+    { currentStatistics, pokemon ->
+        PokemonStatistics(
+            maxHealth = if (pokemon.healthPoints > currentStatistics.maxHealth)
+                pokemon.healthPoints
+            else
+                currentStatistics.maxHealth,
+            shortestName = if (pokemon.name.length() < currentStatistics.shortestName.length())
+                pokemon.name
+            else
+                currentStatistics.shortestName
+        )
+    }
+)
+// PokemonStatistics(maxHealth = 130, shortestName = "Ho-Oh")
+```
+
+### Fonctions
 
 #### Déclaration classique
 
@@ -94,6 +199,10 @@ printWelcomeMessage(null)
 // "Welcome, stranger !"
 ```
 
+#### Paramètres nommés
+
+**TODO**
+
 ## Classes
 
 ### Évolutions depuis Java
@@ -113,7 +222,7 @@ class Foo {
 En Kotlin, toutes ces étapes se résument en une seule ligne.
 
 ```kotlin
-class Foo(val bar: String)
+class Foo(private val bar: String)
 ```
 
 Le fait de déclarer des variables entre parenthèses après le nom de classe a deux effets :
@@ -121,59 +230,62 @@ Le fait de déclarer des variables entre parenthèses après le nom de classe a 
 - définir un attribut `bar`
 - définir un constructeur sur `Foo`, avec un argument `bar` qui sera automatiquement assigné à l'attribut `bar` à la construction
 
-On peut ensuite faire suivre cette déclaration de classe d'un corps entouré d'accolades.
+### Déclaration complète
+
+On peut faire suivre la déclaration minimale de classe d'un corps entouré d'accolades, pour définir des attributs en-dehors du constructeur et des méthodes.
 
 ```kotlin
-class Foo(val bar: String, baz: Int) {
-    val incrementedBaz: Int
-    
-    init {
-        incrementedBaz = baz + 1
-    }
+class Foo(private val bar: String, baz: Int) {
+  private val incrementedBaz: Int
+
+  init {
+    incrementedBaz = baz + 1
+  }
+
+  fun getBar() = bar
 }
 
 ```
 
-On peut donc aussi définir des attributs comme traditionnellement en Java dans le corps de la classe. Après la construction, notre classe dispose d'un attribut `bar` initialisé à la valeur de l'appel au constructeur et un attribut `incrementedBaz` correspondant à la deuxième valeur passée au constructeur à laquelle on ajoute `1`.
+Après la construction, notre classe dispose d'un attribut `bar` initialisé à la valeur de l'appel au constructeur et un attribut `incrementedBaz` correspondant à la deuxième valeur passée au constructeur à laquelle on ajoute `1`.
 
 Le fait de ne pas spécifier `val` ou `var` devant la variable entre parenthèses `()` permet de seulement passer la variable au constructeur sans l'associer à un attribut de classe, et interpréter sa valeur dans le bloc `init`.
 
 ```kotlin
 val foo = Foo("Hello", 2)
 // foo: { bar = "Hello", incrementedBaz = 3 }
+val bar = foo.getBar()
+// bar: "Hello"
 ```
 
-### Companion object
+### Variables statiques
 
-#### Variables statiques (membres de classe non-liés à une instance)
-
-Traditionnellement en Java
+Traditionnellement en Java, on déclare les variables statiques dans le corps d'une classe à l'aide du mot-clé `static`.
 
 ```java
 class Toto {
     public final static String MY_STATIC_MEMBER = "This is my static member";
 }
-
-// elsewhere in the code
-
-    String singletonValue = Toto.MY_STATIC_MEMBER;
-// singletonValue: "This is my static member"
 ```
 
-En kotlin
+On y accède ensuite en spécifiant `.MY_STATIC_MEMBER` sur le nom de la classe.
+
+```java
+String singletonValue = Toto.MY_STATIC_MEMBER;
+// singletonValue: "This is my static member"
+```
+En kotlin, les variables et méthodes statiques se déclarent dans un bloc spécifique `companion object`. Tout ce qu'il contient est *de facto* statique. L'accès se fait de la même manière qu'en Java.
 
 ```kotlin
 class Toto {
     companion object {
-        val MY_SINGLETON = "This is my static member"
+        const val MY_STATIC_MEMBER = "This is my static member"
     }
 }
 
-val singletonValue = Toto.MY_SINGLETON;
-// "This is my static member"
+val staticMemberValue = Toto.MY_STATIC_MEMBER
+// staticMemberValue: "This is my static member"
 ```
-
-Même procédé pour déclarer des méthodes statiques
 
 ### Héritage
 
@@ -181,65 +293,29 @@ Pour pouvoir hériter d'une classe : mot-clé `open`
 
 Un membre non défini dans la classe mère (cf. `logPrefix` ci-dessous) doit être déclaré `abstract`.
 
-````kotlin
-open class Logger(val logPrefix: String) {
+```kotlin
+open class Logger {
+    private abstract val logPrefix: String
 
     fun log(val message: String) {
         print("$logPrefix: $message")
     }
 }
 
-class DebugLogger() : Logger("Debug: ")
+class DebugLogger: Logger {
+    private override val logPrefix = "DEBUG"
+}
 
 val debugLogger = DebugLogger()
 debugLogger.log("my first log message")
 // "Debug: my first log message"
-````
-
-### Operator overloading
-
-Les opérateurs du langage (`+`, `+=`, `()`...) peuvent être surchargés pour les objets d'une classe donnée.
-
-ex. `invoke()`: très utile pour les usecase
-
-```kotlin
-class RetrieveProducts(val productRepository: ProductRepository) {
-
-    override fun invoke(): List<Product> = productsRepository.findAll()
-}
-
-// ...
-
-val retrieveProducts = RetrieveProducts(gtsProductRepository)
-val products = retrieveProducts() // No need to call retrieveProducts.invoke() :-)
 ```
 
-Pour en savoir plus : https://kotlinlang.org/docs/operator-overloading.html
+### Mots-clés de classe
 
-### Method extension
+#### data class
 
-Définition d'une méthode de classe n'importe où en-dehors du corps de cette classe (`{}`)
-
-```kotlin
-class Product(val id: ProductId, val label: String) {}
-
-// ... elsewhere in the code (can be another file !)
-
-Product.toString() = "Product ${id.value}, with label $label"
-```
-
-Note: peut aussi s'appliquer aux collections (`List`...)
-
-```kotlin
-fun List<SimplePrice>.sumOfAmounts(currency: CurrencyCode) = SimplePrice(
-    currency = currency,
-    amount = sumOf { it.amount }
-)
-```
-
-### Classes avec propriétés spécifiques
-
-#### `data class` : équivalent aux POJO (Plain-Old Java Objects)
+On utilise régulièrement des objets voués à transmettre des données entre deux composants. Pour faciliter leur manipulation, Kotlin a mis en place le mot-clé `data` qui permet notamment de comparer automatiquement champ par champ sur tous les champs de deux objets `data` sans redéfinir l'opérateur `equals()` comme traditionnellement en Java.
 
 ```kotlin
 data class Payment(
@@ -249,18 +325,33 @@ data class Payment(
 )
 
 // elsewhere in the code
-val payment = Payment(
+val firstPayment = Payment(
     transactionId = "19537593",
     amount = 1249.99,
     paymentMethod = PaymentMethod.CB
 )
 
-// fields access (using destructuring, only available on data classes)
+val secondPayment = Payment(
+  transactionId = "19537593",
+  amount = 1249.99,
+  paymentMethod = PaymentMethod.CB
+)
+
+val arePaymentsEqual = firstPayment == secondPayment
+// arePaymentsEqual: true
+```
+Sans le mot-clé `data`, la comparaison serait faite sur les références de `firstPayment` et `secondPayment`. Le résultat de la comparaison donnerait `false`. 
+
+`data` ne se limite pas à la comparaison d'objets. Avec une `data class` on peut aussi par exemple déstructurer un objet pour récupérer ses champs dans des variables distinctes.
+
+```kotlin
 val (transactionId, amount, paymentMethod) = payment
-// "19537593", 1249.99, PaymentMethod.CB
+// transactionId: "19537593", amount: 1249.99, paymentMethod: PaymentMethod.CB
 ```
 
-#### Classes "sealed"
+Pour connaître les fonctionnalités offertes par `data class` : https://kotlinlang.org/docs/data-classes.html
+
+#### sealed class
 
 - Classe abstraites (non instanciables directement)
 - Classes qui étendent une `sealed class` contraintes à se trouver soit dans le même fichier que la classe `sealed` de
@@ -301,7 +392,7 @@ Par exemple, on utilise les `sealed class` dans le package `commons` du projet, 
 comportement logique de base (abstrait) et dont on maîtrise l'extension (les classes qui étendent de `sealed` héritent
 du comportement de base et doivent être dans le même package).
 
-#### Classes "enum"
+#### enum class
 
 Spécifier un ensemble fini de valeurs de champ (et éventuellement d'implémentation de méthodes) assignables à un objet
 
@@ -335,7 +426,7 @@ enum class Site(
 
 Pour plus d'infos : https://www.baeldung.com/kotlin/enum
 
-#### Classes "inline"
+#### value class
 
 Utile pour wrapper un type primitif dans une class qui reflète la logique métier
 
@@ -347,7 +438,7 @@ Avantage : beaucoup plus performant que l'usage équivalent sans le mot-clé `va
 
 Pour plus d'infos : https://kotlinlang.org/docs/inline-classes.html
 
-## Singleton
+#### object
 
 Seule instance d'une classe, accessible globalement dans le code via un simple import
 
@@ -360,6 +451,55 @@ ServerConfiguration.baseUrl = "https://cda.test.fr/api/v1"
 // another place
 val gtsProductsResponse = httpClient.call("${ServerConfiguration.baseUrl}/products")
 ```
+
+### Surcharge d'opérateurs
+
+Les opérateurs du langage (`+`, `+=`, `()`...) peuvent être surchargés pour les objets d'une classe donnée.
+
+Par exemple, l'opérateur invoke permet d'appeler une méthode en faisant simplement suivre la variable de l'objet par `()`.
+
+```kotlin
+class RetrieveProducts(private val productRepository: ProductRepository) {
+    override fun invoke(): List<Product> = productsRepository.findAll()
+}
+
+val retrieveProducts = RetrieveProducts(gtsProductRepository)
+val products = retrieveProducts()
+// Pas besoin d'appeler retrieveProducts.invoke() :-)
+```
+
+Pour en savoir plus : https://kotlinlang.org/docs/operator-overloading.html
+
+### Extension de méthode
+
+L'extension de méthodes permet de définir une méthode sur une classe dans un contexte extérieur à sa déclaration. 
+
+Par exemple, on peut ajouter une méthode `toPriceInEuros()` à la classe `Double` native en Kotlin.
+
+```kotlin
+fun Double.toPriceInEuros() = Price(amount = this, currency = Currency.EUR)
+
+val twoEuros = 2.0.toPriceInEuros()
+// twoEuros: Price { amount = 2.0, currency = Currency.EUR }
+```
+
+Cette fonctionnalité s'applique aussi à une collection d'objets d'un certain type.
+
+```kotlin
+import java.util.Currency
+
+data class Price(private val amount: Double, private val currency: Currency)
+
+fun List<Price>.sumAmounts() = this.sum { it.amount }
+
+val sum = listOf(
+  Price(2.0, Currency.EUR),
+  Price(12.0, Currency.EUR),
+  Price(24.0, Currency.EUR),
+).sumAmounts()
+// sum: 38.0
+```
+
 
 ## Interfaces
 
@@ -478,169 +618,6 @@ val message = "Coucou, $username"
 // Coucou, Astérix
 ```
 
-## Transformations
-
-```kotlin
-data class Product(
-    val id: String,
-    val variants: List<Variant>,
-    val label: String
-) {
-
-    data class Variant(
-        val id: String,
-        val price: Double,
-        val label: String
-    )
-
-    fun List<Variant>.toString() { /* ... */
-    }
-
-    fun toString() = "Product $label. Variants: { ${variants.toString()} }"
-}
-```
-
-### filter
-
-```kotlin
-val products: List<Product> = productsRepository.findAll()
-// Retrieve products which have at least one variant
-val productsWithVariants = products.filter { !it.variants.isEmpty() }
-```
-
-### flat map / flatten
-
-```kotlin
-val products: List<Product> = productsRepository.findAll()
-// Retrieve all variants inside products
-val variants = products.flatMap { it.variants }
-```
-
-### map / toMap()
-
-À la sauce Kotlin
-
-```kotlin
-val products: List<Product> = productsRepository.findAll()
-// Retrieve every product label
-val productLabels = products.map { it.label }
-```
-
-### zip
-
-Fusionner 2 listes ayant le même nombre d'éléments, en rejoignant les éléments situés au même index deux à deux avec une
-stratégie de fusion donnée en paramètre
-
-```kotlin
-data class BackendProduct(
-    val id: String,
-    val variants: List<BackendVariant>
-) {
-    data class BackendVariant(
-        val id: String,
-        val price: Double
-    )
-}
-
-val backendProducts: List<BackendProduct> = backendProductsHttpClient.getAll()
-val productLabels = backendProducts.map { productLabelsRepository.find(it.id) }
-
-// Create a Product from the two lists above
-val products = backendProducts.zip(productLabels) { backendProduct, productLabel ->
-    Product(
-        id = backendProduct.id,
-        variants = backendProduct.variants,
-        label = productLabel
-    )
-}
-```
-
-### plus
-
-Aggréger deux listes avec des éléments du même type
-
-```kotlin
-val footballMailingList = listOf("liza@edf.fr", "f.barthez@edf.fr")
-val pantheonMailingList = listOf(
-    "jeremy.bouhi@octo.com",
-    "simon.masliah@octo.com",
-    "r.girard@octo.com",
-    "quentin.mino@octo.com",
-    "valentin.alves@octo.com"
-)
-
-val aggregatedList = footballMailingList.plus(pantheonMailingList)
-// ["liza@edf.fr", "f.barthez@edf.fr", "jeremy.bouhi@octo.com", "simon.masliah@octo.com", "r.girard@octo.com", "quentin.mino@octo.com", "valentin.alves@octo.com"]
-```
-
-### minus
-
-Retirer certains éléments d'une liste
-
-```kotlin
-val hungerGamesChallengers = listOf("Didier", "Jean-Mi", "Gisèle", "Monique", "Bernard")
-val eliminatedChallengers = setOf("Jean-Mi", "Gisèle")
-
-hungerGamesChallengers = hungerGamesChallengers.minus(eliminatedChallengers)
-// ["Didier", "Monique", "Bernard"]
-```
-
-### groupBy
-
-Générer un dictionnaire / une map à partir d'une liste d'objet, en prenant comme clé celle spécifiée en paramètres (`it`
-se réfère à chaque item pour pouvoir définir une clé unique)
-
-```kotlin
-data class Pokemon(val name: String, val attacks: List<Attack>, val healthPoints: Double) {
-    fun hit(val power: Double) = healthPoints -= power
-}
-
-val deck: List<Pokemon> = pokemonDeckProvider.getRandom()
-// Pokemon("Charmander"), Pokemon("Butterfree"), Pokemon("Sandslash")
-
-fun hitPokemon(name: String, deck: List<Pokemon>, power: Double) {
-    val deckByName = deck.groupBy { it.name }
-    /*
-    {
-        "Charmander" -> Pokemon("Charmander", ...),
-        "Butterfree" -> Pokemon("Butterfree", ...),
-        "Sandslash" -> Pokemon("Sandslash", ...)
-    }
-    */
-    deckByName[name].hit(20.0)
-}
-
-hitPokemon("Sandlash", deck, 20.0)
-```
-
-### fold / reduce
-
-Opérateur d'aggrégation : accumuler tous les éléments d'une liste pour aboutir à un seul et unique résultat. On spécifie
-l'opération à effectuer entre les éléments de la liste (et la valeur initiale pour `fold()`, si nécessaire) en paramètre
-
-```kotlin
-data class Pokemon(val name: String, val healthPoints: Int)
-data class PokemonStatistics(val maxHealth: Int, val shortestName: String)
-
-val deck: List<Pokemon> = pokemonDeckProvider.getRandom()
-// Pokemon("Charmander", 130), Pokemon("Ho-Oh", 90), Pokemon("Sandslash", 70)
-val statistics = deck.fold(
-    PokemonStatistics(maxHealth = 0.0, shortestName = "arbitrary_very_long_stringgggggggg")
-    { currentStatistics, pokemon ->
-        PokemonStatistics(
-            maxHealth = if (pokemon.healthPoints > currentStatistics.maxHealth)
-                pokemon.healthPoints
-            else
-                currentStatistics.maxHealth,
-            shortestName = if (pokemon.name.length() < currentStatistics.shortestName.length())
-                pokemon.name
-            else
-                currentStatistics.shortestName
-        )
-    }
-)
-// PokemonStatistics(maxHealth = 130, shortestName = "Ho-Oh")
-```
 
 ## Scope Functions
 
