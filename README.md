@@ -4,70 +4,105 @@
 
 ### Variable
 
-Valeur constante, immutable
+#### Constante
+
+Si la référence pointée par la variable n'est pas amenée à être modifiée (soit dans la majorité des cas), on utilise `val` pour déclarer la variable.
 
 ```kotlin
-val message = "hello"
-// message = ... would result in compilation error
+val message: String = "hello"
+// message = "hello-world" donnerait une erreur de compilation
 ```
 
-Valeur ré-assignable
+Sachant que Kotlin supporte l'inférence de type, préciser `: String` pour le typage est facultatif.
+
+#### Ré-assignable
+
+`var` donne la possibilité de ré-assigner une valeur après l'initialisation de la variable si nécessaire.
 
 ```kotlin
-var message = "hello"
-// string: hello
-string = "hello, world"
-// string: hello, world
+var message: String = "hello"
+// message: "hello"
+message = "hello, world"
+// message: "hello, world"
 ```
+#### Nullable
+
+Faire suivre le type de variable du caractère `?` indique au compilateur que sa valeur peut être `null`. Le langage ne permettra pas d'exécuter un appel de méthode directement sur une variable nullable.
+
+```kotlin
+val nullableString: String? = null
+
+nullableString.chars() // Ne compilera pas
+```
+
+Comme il n'est pas possible de faire un appel sur un objet nullable, on utilise des branchements conditionnels pour gérer les deux cas de figure (la variable est `null`, et le cas inverse)
+
+```kotlin
+val nullableString: String? = stringRepository.findBy("string_id")
+
+val derivedString: String = nullableString ?: "default_string" 
+```
+Si `nullableString` est `null`, `derivedString` vaudra `"defaultString"`. Sinon, c'est la valeur de `nullableString` qui sera lue. C'est l'**Elvis operator** (`?:`).
 
 ### Fonction
 
-#### Déclaration
+#### Déclaration classique
 
-Bloc
+La syntaxe classique de déclaration de fonction englobe le corps dans des accolades, comme en java. Le type de retour et le typage des arguments se font respectivement après le nom de méthode et après chaque argument, séparés par `:`.
 
-````kotlin
+`sum` prend deux arguments de type `Double` et renvoie un `Double`.
+
+```kotlin
 fun sum(a: Double, b: Double): Double {
     return a + b
 }
-````
+```
 
-One-line
+#### En une ligne
 
-````kotlin
-fun sum(a: Double, b: Double): Double = a + b
-````
-
-#### Argument optionnel
+Si le corps de la méthode tient sur une seule ligne, on peut le définir directement sans accolades précédé du caractère `=`.
 
 ```kotlin
-fun printWelcomeMessage(firstName: String?) {
-    firstName ?: {
-        print("Welcome, $firstname !")
-        return
-    }
-
-    print("Welcome, stranger !")
-}
+fun sum(a: Double, b: Double): Double = a + b
 ```
 
 #### Argument par défaut
 
-````kotlin
+Ajouter une valeur par défaut (comme une assignation de variable) permet de rendre un argument de méthode optionnel.
+
+```kotlin
 fun printWelcomeMessage(firstName: String = "stranger") {
-    print("Welcome, $firstName !")
+    println("Welcome, $firstName !")
 }
-````
+
+printWelcomeMessage("Harold")
+// "Welcome, Harold !"
+printWelcomeMessage()
+// "Welcome, stranger !"
+```
+
+#### Argument nullable
+
+La déclaration d'un type nullable s'applique aussi aux arguments de fonction.
+
+```kotlin
+fun printWelcomeMessage(firstName: String?) {
+    print("Welcome, ${firstName ?: "stranger"} !")
+}
+
+printWelcomeMessage(null)
+// "Welcome, stranger !"
+```
 
 ## Classes
 
-### Constructors
+### Évolutions depuis Java
 
-Membres à assigner à la construction, traditionnellement en Java
+Pour créer une classe `Foo` avec un champ `bar` de type `String` et un constructeur pour initialiser ce champ, en Java :
 
 ```java
 class Foo {
-    private String bar;
+    private final String bar;
 
     public Foo(String bar) {
         this.bar = bar;
@@ -75,10 +110,37 @@ class Foo {
 }
 ```
 
-Équivalent Kotlin
+En Kotlin, toutes ces étapes se résument en une seule ligne.
 
 ```kotlin
 class Foo(val bar: String)
+```
+
+Le fait de déclarer des variables entre parenthèses après le nom de classe a deux effets :
+
+- définir un attribut `bar`
+- définir un constructeur sur `Foo`, avec un argument `bar` qui sera automatiquement assigné à l'attribut `bar` à la construction
+
+On peut ensuite faire suivre cette déclaration de classe d'un corps entouré d'accolades.
+
+```kotlin
+class Foo(val bar: String, baz: Int) {
+    val incrementedBaz: Int
+    
+    init {
+        incrementedBaz = baz + 1
+    }
+}
+
+```
+
+On peut donc aussi définir des attributs comme traditionnellement en Java dans le corps de la classe. Après la construction, notre classe dispose d'un attribut `bar` initialisé à la valeur de l'appel au constructeur et un attribut `incrementedBaz` correspondant à la deuxième valeur passée au constructeur à laquelle on ajoute `1`.
+
+Le fait de ne pas spécifier `val` ou `var` devant la variable entre parenthèses `()` permet de seulement passer la variable au constructeur sans l'associer à un attribut de classe, et interpréter sa valeur dans le bloc `init`.
+
+```kotlin
+val foo = Foo("Hello", 2)
+// foo: { bar = "Hello", incrementedBaz = 3 }
 ```
 
 ### Companion object
