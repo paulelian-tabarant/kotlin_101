@@ -44,6 +44,62 @@ val derivedString: String = nullableString ?: "default_string"
 ```
 Si `nullableString` est `null`, `derivedString` vaudra `"defaultString"`. Sinon, c'est la valeur de `nullableString` qui sera lue. C'est l'**Elvis operator** (`?:`).
 
+### Structures de contrôle
+
+#### Case : TODO
+
+Exécuter différents blocs de code en fonction de la valeur d'une variable
+
+```kotlin
+class CarFactory {
+    inner enum class Model {
+        RENAULT,
+        CITROEN,
+        FORD
+    }
+
+    fun buildModel(model: Model) =
+        when (model) {
+            RENAULT -> Renault()
+            CITROEN -> Citroen()
+            FORD -> Ford()
+            else -> throw UnknownModelException("model cannot be built")
+        }
+}
+```
+
+#### Elvis : TODO
+
+Exécuter un bloc de code dans le cas où la valeur à gauche de l'elvis est `null`
+
+```kotlin
+// Somewhere in another file
+data class Movie(val title: String, val description: String)
+
+class MovieRepository() {
+    fun find(name: String): Movie? { /* ... */
+    }
+}
+
+val movie = movieRepository.find("Three Billboards outside Ebbing, Missouri")
+
+// If no movie found, throw exception 
+val description = movie?.description ?: throw MovieNotFoundException()
+```
+
+### Chaînes de caractère
+
+#### Interpolation : TODO
+
+Insérer des valeurs dynamiques de `String` à l'intérieur d'un template en dur
+
+```kotlin
+val username: String = authenticatedUserProvider.getName()
+
+val message = "Coucou, $username"
+// Coucou, Astérix
+```
+
 ### Itérer sur des collections d'objets
 
 #### map
@@ -526,32 +582,35 @@ val sum = listOf(
 
 ## Interfaces
 
-Utilisées dans une codebase pour utiliser du polymorphisme : effectuer des actions sur des objets sans se soucier de
-l'implémentation sous-jacente, pourvu qu'ils respectent le contrat d'interface
+Les interfaces ont pour vocation de faire du polymorphisme, autrement dit de définir un contrat générique pour interagir de la même manière avec différents types de classe, indifféremment de leur logique interne.
 
 ### Déclaration
 
+Si l'on souhaite par exemple s'abstraire d'une logique de formattage dans le code appelant, on définit une interface `DateFormatter`, avec deux implémentations pour deux usages distincts (affichage pour des ressources REST et pour du logging)
+
 ```kotlin
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeFormatter.ofPattern
+
 interface DateFormatter {
-    fun format(date: LocalDate): String
-}
-
-class FrontDateFormatter : DateFormatter {
-    override fun format(date: LocalDate): String {
-        val formatter = DateTimeFormatter.ofPattern("EEEEE MMMMM yyyy, à HH:mm:ss")
+    val formatter: DateTimeFormatter
+    
+    fun format(dateTime: LocalDateTime) : String {
         return date.format(formatter)
     }
 }
 
-class DatadogDateFormatter : DateFormatter {
-    override fun format(date: LocalDate): String {
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSZ")
-        return date.format(formatter)
-    }
+class RestDateFormatter : DateFormatter {
+    override val formatter: DateTimeFormatter = ofPattern("EEEEE MMMMM yyyy, à HH:mm:ss")
+}
+
+class LoggingDateFormatter : DateFormatter {
+    override val formatter: DateTimeFormatter = ofPattern("yyyy-MM-dd HH:mm:ss.SSSZ")
 }
 ```
 
-### Injection de dépendance
+Le code appelant (ici un use-case `RetrieveFormattedProductConsumptionDate`) n'a aucun besoin de connaître l'implémentation concrète derrière l'interface `DateFormatter`.
 
 ```kotlin
 
@@ -561,88 +620,30 @@ class RetrieveFormattedProductConsumptionDate(
 ) {
     override fun invoke(val productId: ProductId): String {
         val product = productRepository.findBy(productId)
-
         return dateFormatter.format(product.consumptionDate)
     }
 }
 ```
 
-### Usage en contexte avec polymorphisme
+Il suffit ensuite d'injecter l'implémentation adéquate selon le contexte d'utilisation du use-case. Par exemple, lorsque le use-case souhaite renvoyer des informations via une API REST :
 
 ```kotlin
-// front-related use case
-val frontDateFormatter = FrontDateFormatter()
-val retrieveFrontFormattedConsumptionDate =
-    RetrieveFormattedProductConsumptionDate(productsRepository, frontDateFormatter)
-val consumptionDateForFront = retrieveFrontFormattedConsumptionDate()
-// "
+val restDateFormatter = RestDateFormatter()
+val retrieveRestFormattedConsumptionDate =
+    RetrieveFormattedProductConsumptionDate(productsRepository, restDateFormatter)
+val restFormattedConsumptionDate = retrieveRestFormattedConsumptionDate()
 ```
+
+Pour un use-case qui utilise la date dans des logs :
 
 ```kotlin
-// datadog-related use case
-val datadogDateFormatter = DatadogDateFormatter()
-val retrieveDatadogFormattedConsumptionDate =
-    RetrieveFormattedProductConsumptionDate(productsRepository, datadogDateFormatter)
-val consumptionDateForDatadog = retrieveDatadogFormattedConsumptionDate()
-// "
+val loggingDateFormatter = LoggingDateFormatter()
+val retrieveLoggingFormattedConsumptionDate =
+    RetrieveFormattedProductConsumptionDate(productsRepository, loggingDateFormatter)
+val loggingFormattedDate = retrieveDatadogFormattedConsumptionDate()
 ```
 
-## Mots-clés
-
-### Case
-
-Exécuter différents blocs de code en fonction de la valeur d'une variable
-
-```kotlin
-class CarFactory {
-    inner enum class Model {
-        RENAULT,
-        CITROEN,
-        FORD
-    }
-
-    fun buildModel(model: Model) =
-        when (model) {
-            RENAULT -> Renault()
-            CITROEN -> Citroen()
-            FORD -> Ford()
-            else -> throw UnknownModelException("model cannot be built")
-        }
-}
-```
-
-### Elvis
-
-Exécuter un bloc de code dans le cas où la valeur à gauche de l'elvis est `null`
-
-```kotlin
-// Somewhere in another file
-data class Movie(val title: String, val description: String)
-
-class MovieRepository() {
-    fun find(name: String): Movie? { /* ... */
-    }
-}
-
-val movie = movieRepository.find("Three Billboards outside Ebbing, Missouri")
-
-// If no movie found, throw exception 
-val description = movie?.description ?: throw MovieNotFoundException()
-```
-
-### String interpolation
-
-Insérer des valeurs dynamiques de `String` à l'intérieur d'un template en dur
-
-```kotlin
-val username: String = authenticatedUserProvider.getName()
-
-val message = "Coucou, $username"
-// Coucou, Astérix
-```
-
-
-## Scope Functions
+## Scope Functions : TODO
 
 Parmi les standards de Kotlin, on retrouve plusieurs fonctions qui ont pour seule responsabilité d'exécuter du code dans le contexte d'un objet.
 
