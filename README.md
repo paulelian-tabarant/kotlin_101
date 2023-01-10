@@ -44,7 +44,7 @@ val derivedString: String = nullableString ?: "default_string"
 ```
 Si `nullableString` est `null`, `derivedString` vaudra `"defaultString"`. Sinon, c'est la valeur de `nullableString` qui sera lue. C'est l'**Elvis operator** (`?:`).
 
-### Itérer sur des collections
+### Itérer sur des collections d'objets
 
 #### map
 
@@ -192,7 +192,7 @@ La déclaration d'un type nullable s'applique aussi aux arguments de fonction.
 
 ```kotlin
 fun printWelcomeMessage(firstName: String?) {
-    print("Welcome, ${firstName ?: "stranger"} !")
+    println("Welcome, ${firstName ?: "stranger"} !")
 }
 
 printWelcomeMessage(null)
@@ -201,7 +201,21 @@ printWelcomeMessage(null)
 
 #### Paramètres nommés
 
-**TODO**
+Lors d'un appel de fonction, le nom de chaque paramètre assigné pour l'appel peut être spécifié explicitement.
+
+```kotlin
+fun printWelcomeMessage(firstName: String, lastName: String, city: String) {
+  println("Welcome, $firstName $lastName! What's up in $city ?")
+}
+
+printWelcomeMessage(
+  lastName = "Kent",
+  firstName = "Clark",
+  city = "New York"
+)
+```
+
+Utiliser les paramètres nommés a aussi l'avantage de pouvoir s'abstraire de l'ordre dans l'assignation des paramètres. Dans l'exemple, `lastName` est fourni avant `firstName` contrairement à l'ordre dans la déclaration de fonction.
 
 ## Classes
 
@@ -351,6 +365,44 @@ val (transactionId, amount, paymentMethod) = payment
 
 Pour connaître les fonctionnalités offertes par `data class` : https://kotlinlang.org/docs/data-classes.html
 
+#### enum class
+
+L'`enum class` est pertinente lorsqu'on veut définir une classe avec un nombre d'instances restreint et déjà connu à la compilation. Autrement dit, on sait déjà quels sont les objets de cette classe que l'on va manipuler, et qui seront tous du type de la classe de base (`EurosDenomination` dans l'exemple).
+
+```kotlin
+import README.EurosDenomination.Type.BILL
+import README.EurosDenomination.Type.COIN
+import README.EurosDenomination.Unit.CENTS
+import README.EurosDenomination.Unit.EUROS
+
+ enum class EurosDenomination(
+    val value: Int,
+    val unit: Unit,
+    val type: Type
+) {
+    ONE_CENT            (1, CENTS, COIN),
+    TWO_CENTS           (2, CENTS, COIN),
+    FIVE_CENTS          (5, CENTS, COIN),
+    TEN_CENTS          (10, CENTS, COIN),
+    TWENTY_CENTS       (20, CENTS, COIN),
+    FIFTY_CENTS        (50, CENTS, COIN),
+    ONE_EURO            (1, EUROS, COIN),
+    TWO_EUROS           (2, EUROS, COIN),
+    FIVE_EUROS          (5, EUROS, BILL),
+    TEN_EUROS          (10, EUROS, BILL),
+    TWENTY_EUROS       (20, EUROS, BILL),
+    FIFTY_EUROS        (50, EUROS, BILL),
+    ONE_HUNDRED_EUROS (100, EUROS, BILL),
+    TWO_HUNDRED_EUROS (200, EUROS, BILL),
+    FIVE_HUNDRED_EUROS(500, EUROS, BILL);
+  
+    enum class Type { COIN, BILL; }
+    enum class Unit { EUROS, CENTS; }
+}
+```
+
+Pour plus d'infos : https://www.baeldung.com/kotlin/enum
+
 #### sealed class
 
 - Classe abstraites (non instanciables directement)
@@ -391,40 +443,6 @@ sealed class Order {
 Par exemple, on utilise les `sealed class` dans le package `commons` du projet, pour pouvoir à la fois définir un
 comportement logique de base (abstrait) et dont on maîtrise l'extension (les classes qui étendent de `sealed` héritent
 du comportement de base et doivent être dans le même package).
-
-#### enum class
-
-Spécifier un ensemble fini de valeurs de champ (et éventuellement d'implémentation de méthodes) assignables à un objet
-
-```kotlin
-enum class Site(
-    val timeZone: ZoneId,
-    val currency: CurrencyCode,
-    val hasB2CSales: Boolean,
-    val hasStays: Boolean,
-    val needsEmailSending: Boolean,
-    val country: Country
-) {
-    PARC_ASTERIX(
-        timeZone = ZoneId.of("Europe/Paris"),
-        currency = EUR,
-        hasB2CSales = true,
-        hasStays = true,
-        needsEmailSending = true,
-        country = FRANCE
-    ),
-    FRANCE_MINIATURE(
-        timeZone = ZoneId.of("Europe/Paris"),
-        currency = EUR,
-        hasB2CSales = true,
-        hasStays = false,
-        needsEmailSending = true,
-        country = FRANCE
-    )
-}
-```
-
-Pour plus d'infos : https://www.baeldung.com/kotlin/enum
 
 #### value class
 
