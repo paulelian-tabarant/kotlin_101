@@ -405,44 +405,54 @@ Pour plus d'infos : https://www.baeldung.com/kotlin/enum
 
 #### sealed class
 
-- Classe abstraites (non instanciables directement)
-- Classes qui étendent une `sealed class` contraintes à se trouver soit dans le même fichier que la classe `sealed` de
-  base, soit dans le même package
+La `sealed class` est plus générique que l'`enum class`. Là où l'`enum class` contraint une seule et unique classe à un certain nombre d'instances prédéfinies, la `sealed class` contraint ses classes filles à un nombre de types prédéfinis, déclarés nécessairement dans le même package que celle-ci.
 
-> Sealed classes are designed to be used when there are a very specific set of possible options for a value, and where each of these options is functionally different – just Algebraic Data Types.
-
-Pour plus d'infos : https://www.baeldung.com/kotlin/sealed-classes
+Elle est donc pertinente lorsqu'on sait préalablement l'ensemble des sous-types d'une classe donnée dans notre application.
 
 ```kotlin
-sealed class Order {
-    // Closed for modification
-    abstract val id: OrderId
-    abstract val site: Site
+sealed class MoneyDenomination(
+    abstract val amount: Int,
+    abstract val Type: Type
+) {
+  enum class Type { COIN, BILL; }
+}
 
-    data class OrderWithTickets(
-        // Closed for modification
-        override val id: OrderId,
-        override val site: Site,
-        // Open for extension
-        val articles: List<OrderArticle>,
-        val couponCode: CouponCode? = null,
-        val participantsDetails: List<OrderPassParticipant> = emptyList()
-    ) : Order()
+enum class EuroDenomination : MoneyDenomination {
+    ONE_CENT            (1, COIN),
+    TWO_CENTS           (2, COIN),
+    FIVE_CENTS          (5, COIN),
+    // ...
+    ONE_HUNDRED_EUROS (100, BILL),
+    TWO_HUNDRED_EUROS (200, BILL),
+    FIVE_HUNDRED_EUROS(500, BILL);
+}
 
-    data class OrderWithStay(
-        // Closed for modification
-        override val id: OrderId,
-        override val site: Site,
-        // Open for extension
-        val stay: OrderStay,
-        val hotel: Hotel
-    ) : Order()
+enum class PesoDenomination : MoneyDenomination {
+  FIVE_CENTAVOS       (5, COIN),
+  TEN_CENTAVOS       (10, COIN),
+  TWENTY_CENTAVOS    (20, COIN),
+  //...
+  TWO_HUNDRED_PESOS  (200, BILL),
+  FIVE_HUNDRED_PESOS (500, BILL),
+  ONE_THOUSAND_PESOS(1000, BILL),
 }
 ```
 
-Par exemple, on utilise les `sealed class` dans le package `commons` du projet, pour pouvoir à la fois définir un
-comportement logique de base (abstrait) et dont on maîtrise l'extension (les classes qui étendent de `sealed` héritent
-du comportement de base et doivent être dans le même package).
+Comme les sous-types d'une `sealed class` sont connus au moment du *build*, le compilateur Kotlin connaît déjà tous les types possibles lorsqu'on manipule des objets de cette classe. Cette connaissance autorise l'utilisation d'un `when` exhaustif en cas de comportement souhaité selon les sous-types d'une `sealed class`. Il n'est pas nécessaire de fournir de cas par défaut.
+
+```kotlin
+fun displayCatchphrase(denomination: MoneyDenomination) {
+    val message: String  = when (denomination) {
+        EuroDenomination -> "This comes from the old world."
+        PesoDenomination -> "This comes from the other side of the atlantic !"
+        // "else" pas nécessaire ici
+    }
+    
+    println(message)
+}
+```
+
+Pour plus d'infos : https://www.baeldung.com/kotlin/sealed-classes
 
 #### value class
 
