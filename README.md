@@ -456,28 +456,24 @@ Pour plus d'infos : https://www.baeldung.com/kotlin/sealed-classes
 
 #### value class
 
-Utile pour wrapper un type primitif dans une class qui reflète la logique métier
+Pour encapsuler une valeur unique à l'intérieur d'un objet, Kotlin propose le mot-clé `value class`. Il est bien-sûr possible de définir une `class` classique pour cet usage, mais rajouter `value` améliore significativement la performance.
 
 ```kotlin
+@JvmInline
 value class TicketId(val value: String)
 ```
-
-Avantage : beaucoup plus performant que l'usage équivalent sans le mot-clé `value`
 
 Pour plus d'infos : https://kotlinlang.org/docs/inline-classes.html
 
 #### object
 
-Seule instance d'une classe, accessible globalement dans le code via un simple import
+`object` est réservé aux cas où l'on souhaite un objet unique d'une classe  accessible depuis n'importe quelle classe de l'application (pattern [singleton](https://fr.wikipedia.org/wiki/Singleton_(patron_de_conception))).
 
 ```kotlin
-object ServerConfiguration(var baseUrl: String) {}
+object ServerConfiguration(val baseUrl: String = "https://cda.test.fr/api/v1")
 
-// anywhere else in the code
-ServerConfiguration.baseUrl = "https://cda.test.fr/api/v1"
-
-// another place
-val gtsProductsResponse = httpClient.call("${ServerConfiguration.baseUrl}/products")
+// Dans une classe, quelque part dans le code
+val productsResponse = httpClient.get("${ServerConfiguration.baseUrl}/products")
 ```
 
 ### Surcharge d'opérateurs
@@ -527,7 +523,6 @@ val sum = listOf(
 ).sumAmounts()
 // sum: 38.0
 ```
-
 
 ## Interfaces
 
