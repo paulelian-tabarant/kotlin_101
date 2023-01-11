@@ -131,81 +131,96 @@ val description = movie?.description ?: ""
 
 ### Itérer sur des collections d'objets
 
-Kotlin dispose de plusieurs fonctions utilitaires sur des collections qui permettent de s'abstraire des traditionnelles boucles `for` dans la majorité des cas.
+Kotlin dispose de plusieurs fonctions utilitaires sur des collections qui permettent de s'abstraire des traditionnelles boucles `for` dans la majorité des cas. À chaque fois, le résultat renvoie une *copie* sans modifier le contenu de la collection d'entrée.
+
+Chaque élément de la collection initiale est accessible directement par la dénomination `it`.
 
 #### map
 
+`map` transforme une collection d'entrée en appliquant la même opération à chaque élément, dans l'exemple ci-dessous, ne conserver que le champ `label` des objets `Product`.
+
 ```kotlin
 val products: List<Product> = productsRepository.findAll()
-// Retrieve every product label
+// products = [ Product { id: 1, label: "Pair of slippers" }, Product { id: 2, label: "Chicken wings" } ]
 val productLabels = products.map { it.label }
+// productLabels = [ String { "Pair of slippers" }, String { "Chicken wings" } ]
 ```
 
 #### flatMap
 
+Lorsqu'on doit agréger plusieurs listes entre elles, contenues dans chaque élément de la collection initiale, l'opérateur `flatMap` devient pertinent.
+
 ```kotlin
-val products: List<Product> = productsRepository.findAll()
-// Retrieve all variants inside products
-val variants = products.flatMap { it.variants }
+data class CarBrand(
+    val name: String,
+    val models: Model 
+) 
+
+val carBrands: List<CarBrand> = availableBrandsRepository.findAll()
+// carBrands = [ 
+//      CarBrand { name = "Renault", models = [ Model("Mégane"), Model ("Scénic") ] },
+//      CarBrand { name = "Fiat", models = Model("Punto") }
+// ]
+val carModels = carBrands.flatMap { it.models }
+// carModels = [ Model("Mégane"), Model("Scénic"), Model("Punto") ]
 ```
 
 #### filter
 
-```kotlin
-val products: List<Product> = productsRepository.findAll()
-// Retrieve products which have at least one variant
-val productsWithVariants = products.filter { !it.variants.isEmpty() }
-```
-
-### Opérateurs sur des collections
-
-#### plus
-
-Aggréger deux listes avec des éléments du même type
+Quand on l'applique à une collection, `filter`  ne conserver que les éléments qui vérifient l'assertion passée entre accolades.
 
 ```kotlin
-val footballMailingList = listOf("liza@edf.fr", "f.barthez@edf.fr")
-val pantheonMailingList = listOf(
-    "jeremy.bouhi@octo.com",
-    "simon.masliah@octo.com",
-    "r.girard@octo.com",
-    "quentin.mino@octo.com",
-    "valentin.alves@octo.com"
-)
+import java.util.Locale.IsoCountryCode
 
-val aggregatedList = footballMailingList.plus(pantheonMailingList)
-// ["liza@edf.fr", "f.barthez@edf.fr", "jeremy.bouhi@octo.com", "simon.masliah@octo.com", "r.girard@octo.com", "quentin.mino@octo.com", "valentin.alves@octo.com"]
+data class Movie(val title: String, val countryCode: IsoCountryCode)
+
+val movies: List<Movie> = moviesRepository.findAll()
+// movies = [ 
+//      Movie { title = "The hateful Eight", countryCode = "US" },
+//      Movie { title  = "Intouchables", countryCode = "FR" },
+//      Movie { title  = "I, Daniel Blake", countryCode = "UK" }
+// ]
+val frenchMovies = movies.filter { it.countryCode == IsoCountryCode.valueOf("FR") }
+// frenchMovies = [
+//      Movie { title  = "Intouchables", countryCode = "FR" },
+// ]
 ```
 
 #### groupBy
 
-Générer un dictionnaire / une map à partir d'une liste d'objet, en prenant comme clé celle spécifiée en paramètres (`it`
-se réfère à chaque item pour pouvoir définir une clé unique)
+Quand on cherche à classer les éléments d'une liste selon la valeur d'un champ des éléments, `groupBy` génère une `Map` avec comme clé la valeur du champ, et comme valeur les éléments ayant le champ concerné à cette valeur.
 
 ```kotlin
-data class Pokemon(val name: String, val attacks: List<Attack>, val healthPoints: Double) {
+data class Pokemon(val name: String, var healthPoints: Int) {
     fun hit(val power: Double) = healthPoints -= power
 }
 
 val deck: List<Pokemon> = pokemonDeckProvider.getRandom()
-// Pokemon("Charmander"), Pokemon("Butterfree"), Pokemon("Sandslash")
+// deck = [
+//      Pokemon { "Charmander", 120 },
+//      Pokemon {"Butterfree", 100 },
+//      Pokemon { "Sandslash", 70 }
+// ]
 
 fun hitPokemon(name: String, deck: List<Pokemon>, power: Double) {
     val deckByName = deck.groupBy { it.name }
-    /*
-    {
-        "Charmander" -> Pokemon("Charmander", ...),
-        "Butterfree" -> Pokemon("Butterfree", ...),
-        "Sandslash" -> Pokemon("Sandslash", ...)
-    }
-    */
-    deckByName[name].hit(20.0)
+    // {
+    //     "Charmander" -> Pokemon("Charmander", 120) 
+    //     "Butterfree" -> Pokemon("Butterfree", 100) 
+    //     "Sandslash" -> Pokemon("Sandslash", 70) 
+    // }
+    deckByName[name]?.hit(20.0) ?: throw PokemonNotInDeckException(name)
 }
 
 hitPokemon("Sandlash", deck, 20.0)
+// deck = [
+//      Pokemon { "Charmander", 120 },
+//      Pokemon {"Butterfree", 100 },
+//      Pokemon { "Sandslash", 50 }
+// ]
 ```
 
-#### fold / reduce
+#### fold / reduce : TODO
 
 Opérateur d'aggrégation : accumuler tous les éléments d'une liste pour aboutir à un seul et unique résultat. On spécifie
 l'opération à effectuer entre les éléments de la liste (et la valeur initiale pour `fold()`, si nécessaire) en paramètre
