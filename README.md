@@ -39,20 +39,41 @@ Comme il n'est pas possible de faire un appel sur un objet nullable, on utilise 
 
 ```kotlin
 val nullableString: String? = stringRepository.findBy("string_id")
-
-val derivedString: String = nullableString ?: "default_string" 
 ```
-Si `nullableString` est `null`, `derivedString` vaudra `"defaultString"`. Sinon, c'est la valeur de `nullableString` qui sera lue. C'est l'**Elvis operator** (`?:`).
+
+Il est possible de vérifier très facilement la valeur `null` d'une variable en Kotlin (cf. section X sur l'Elvis operator).
+
+#### Chaînes de caractère
+
+Kotlin ajoute une fonctionnalité d'*interpolation* aux variables de type `String`, qui insère des valeurs dynamiques à l'intérieur d'une chaîne de caractères en dur en utilisant `$`.
+
+```kotlin
+val username: String = authenticatedUserProvider.getName()
+val message = "Welcome home, $username !"
+```
 
 ### Structures de contrôle
 
-#### Case : TODO
+#### if
 
-Exécuter différents blocs de code en fonction de la valeur d'une variable
+La spécificité du `if` en Kotlin est que chaque issue possible est directement assignable à une variable.
 
 ```kotlin
+val minQuantity = productsRepository.find(productId).minQuantity
+val computedQuantity = if (requestedQuantity < minQuantity) minQuantity else requestedQuantity
+```
+
+#### when
+
+Comme un `switch / case` dans d'autres langages, le `when` est utile lorsque plus de deux comportements sont souhaités selon l'état d'une variable.
+
+```kotlin
+data class Renault
+data class Citroen
+data class Ford
+
 class CarFactory {
-    inner enum class Model {
+    enum class Model {
         RENAULT,
         CITROEN,
         FORD
@@ -68,43 +89,51 @@ class CarFactory {
 }
 ```
 
-#### Elvis : TODO
-
-Exécuter un bloc de code dans le cas où la valeur à gauche de l'elvis est `null`
+Dans le cas ci-dessus, `when` est utilisé avec le scope de la variable `model`. Si les différents cas ne sont pas réduits à l'état d'une seule variable, il est aussi possible d'adopter la syntaxe suivante.
 
 ```kotlin
-// Somewhere in another file
+fun calculate(val op1: Double, val op2: Double, val operator: String) =
+    when {
+        operator == '/' && op2 != 0.0 -> op1 / op2
+        operator == '*' -> op1 * op2
+        operator == '+' -> op1 + op2
+        operator == '-' -> op1 - op2
+        else -> throw OperationNotSupportedException(op1, op2, operator)
+    }
+```
+
+#### Opérateurs sur variables nullables
+
+L'*Elvis operator* `?:` a été introduit essentiellement pour s'abstraire des blocs conditionnels du type
+
+```kotlin
+if (variable == null) doSomethingWhenNull()
+```
+
+L'*Elvis Operator* permet d'arriver au même résultat avec la syntaxe suivante
+
+```kotlin
+variable ?: doSomethingWhenNull()
+```
+Les variables nullables permettent aussi de récupérer la valeur d'un champ uniquement si l'objet nullable est non `null`, avec la syntaxe `?.`. À noter que comme pour le branchement `if`, les deux cas (`null` ou non) renvoient un résultat assignable à une variable.
+
+```kotlin
 data class Movie(val title: String, val description: String)
 
 class MovieRepository() {
-    fun find(name: String): Movie? { /* ... */
-    }
+    fun find(name: String): Movie? { /* ... */ }
 }
 
+// Quelque part dans une autre classe
 val movie = movieRepository.find("Three Billboards outside Ebbing, Missouri")
-
-// If no movie found, throw exception 
-val description = movie?.description ?: throw MovieNotFoundException()
-```
-
-### Chaînes de caractère
-
-#### Interpolation : TODO
-
-Insérer des valeurs dynamiques de `String` à l'intérieur d'un template en dur
-
-```kotlin
-val username: String = authenticatedUserProvider.getName()
-
-val message = "Coucou, $username"
-// Coucou, Astérix
+val description = movie?.description ?: ""
 ```
 
 ### Itérer sur des collections d'objets
 
-#### map
+Kotlin dispose de plusieurs fonctions utilitaires sur des collections qui permettent de s'abstraire des traditionnelles boucles `for` dans la majorité des cas.
 
-À la sauce Kotlin
+#### map
 
 ```kotlin
 val products: List<Product> = productsRepository.findAll()
