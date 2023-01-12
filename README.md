@@ -259,6 +259,16 @@ fun sum(a: Double, b: Double): Double {
 }
 ```
 
+Kotlin est plus permissif sur les noms de fonction : il est aussi possible de les définir via une phrase entre *backticks* (et donc potentiellement des espaces), là où une signature traditionnelle ne le permet pas. C'est particulièrement utile pour l'écriture de tests explicites. 
+
+```kotlin
+@Test
+fun `when given two floating point numbers, should compute their sum`() {
+    assertThat(sum(2.0, 5.0)).isEquelTo(7.0)
+}
+```
+
+
 #### En une ligne
 
 Si le corps de la méthode tient sur une seule ligne, on peut le définir directement sans accolades précédé du caractère `=`.
@@ -683,54 +693,66 @@ val retrieveLoggingFormattedConsumptionDate =
 val loggingFormattedDate = retrieveDatadogFormattedConsumptionDate()
 ```
 
-## Scope Functions : TODO
+## Scope Functions
 
 Parmi les standards de Kotlin, on retrouve plusieurs fonctions qui ont pour seule responsabilité d'exécuter du code dans le contexte d'un objet.
 
+### with() : TODO
+
+```
+TODO with()
+```
+
+### let() : TODO
+
+```
+TODO let()
+```
+
+### run() : TODO
+
+```
+TODO run()
+```
+
 ### apply()
 
-L'objet est disponible en tant que récepteur ``this`` et il se retourne lui-même.
-Utilisé dans la configuration d'un objet.
+L'objet est disponible en tant que `this` et il se retourne lui-même.
+
 ```kotlin
 data class Product(
     val name: String,
     val quantity: Int,
 )
 
-val myList = mutableListOf<Product>()
-
-fun `add essential stuff to my ShoppingList`() : List<Product> {
-    return myList.apply {
+fun MutableList<Product>.addEssentialStuff() = 
+    this.apply {
         add(Product(name = "Pair of Slippers", quantity = 1))
         add(Product(name = "Beer keg", quantity = 7))
     }
-}
 
-// println(`add essential stuff to my ShoppingList`().toString()) will output : 
-// [Product(name=Pair of Slippers, quantity=1), Product(name=Beer keg, quantity=7)] 
+val shoppingList = mutableListOf<Product>()
+val updatedShoppingList = shoppingList.addEssentialStuff()
+// updatedShoppingList : [
+//      Product(name=Pair of Slippers, quantity=1),
+//      Product(name=Beer keg, quantity=7)
+// ] 
 
 ```
 
-### also()
+`apply` est particulièrement adapté lorsqu'on souhaite rendre une méthode chaînable. Dans l'exemple ci-dessus, on pourrait imaginer
+
+```kotlin
+val remainingBeersWhenStolenSlippers = shoppingList
+    .addEssentialStuff()
+    .filter { it.name == "Pair of Slippers" }
+    .map { it.quantity }
+    .first()
+// remainingBeersWhenStolenSlippers: 7
+```
+
+### also() : TODO
 
 ```
 TODO also()
-```
-
-### let()
-
-```
-TODO let()
-```
-
-### run()
-
-```
-TODO run()
-```
-
-### with()
-
-```
-TODO with()
 ```
