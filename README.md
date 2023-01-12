@@ -215,39 +215,35 @@ fun hitPokemon(name: String, deck: List<Pokemon>, power: Double) {
 hitPokemon("Sandlash", deck, 20.0)
 // deck = [
 //      Pokemon { "Charmander", 120 },
-//      Pokemon {"Butterfree", 100 },
+//      Pokemon { "Butterfree", 100 },
 //      Pokemon { "Sandslash", 50 }
 // ]
 ```
 
-#### fold / reduce : TODO
+#### reduce
 
-Opérateur d'aggrégation : accumuler tous les éléments d'une liste pour aboutir à un seul et unique résultat. On spécifie
-l'opération à effectuer entre les éléments de la liste (et la valeur initiale pour `fold()`, si nécessaire) en paramètre
+`reduce` s'utilise pour agréger tous les éléments d'une liste en un seul afin d'obtenir un résultat. Les éléments sont ajoutés à un *accumulateur* qui stocke les résultats successifs au fur et à mesure que l'opération souhaitée est appliquée à chaque élément de la liste. Cette opération est définie en tant que lambda dans les paramètres de la fonction `reduce`.
 
-```kotlin
-data class Pokemon(val name: String, val healthPoints: Int)
-data class PokemonStatistics(val maxHealth: Int, val shortestName: String)
+~~~kotlin
+data class Pokemon(val name: String, val healthPoints: Int) {
+    fun toString(): String = "{ $name, $healthPoints health points }"
+}
 
-val deck: List<Pokemon> = pokemonDeckProvider.getRandom()
-// Pokemon("Charmander", 130), Pokemon("Ho-Oh", 90), Pokemon("Sandslash", 70)
-val statistics = deck.fold(
-    PokemonStatistics(maxHealth = 0.0, shortestName = "arbitrary_very_long_stringgggggggg")
-    { currentStatistics, pokemon ->
-        PokemonStatistics(
-            maxHealth = if (pokemon.healthPoints > currentStatistics.maxHealth)
-                pokemon.healthPoints
-            else
-                currentStatistics.maxHealth,
-            shortestName = if (pokemon.name.length() < currentStatistics.shortestName.length())
-                pokemon.name
-            else
-                currentStatistics.shortestName
-        )
+fun List<Pokemon>.toString() =
+    this.reduce { (pokemonsString, currentPokemon) ->
+        "$pokemonsString $currentPokemon /"
     }
-)
-// PokemonStatistics(maxHealth = 130, shortestName = "Ho-Oh")
-```
+
+val pokemons = listOf(Pokemon("Groudon", 120), Pokemon("Lugia", 70))
+println(pokemons.toString())
+// { Groudon, 120 health points } / { Lugia, 70 health points } /
+~~~
+
+Ici, par exemple, on souhaite représenter tous les Pokémon d'une liste en une seule `String`. L'opération à appliquer, pour chaque Pokémon, est de prendre le pokémon courant et ajouter sa représentation en `String` dans `pokemonsString`, l'accumulateur, suivi d'un `/` qui vient marquer la séparation entre chaque Pokémon affiché dans la `String` finale.
+
+À noter que `reduce` définit une valeur initiale par défaut à l'accumumateur (pour une `String`, `""`). Si l'on souhaite définir une autre valeur initiale, utiliser `fold`.
+
+Pour en savoir plus : https://kotlinlang.org/docs/collection-aggregate.html#fold-and-reduce
 
 ### Fonctions
 
