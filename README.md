@@ -409,26 +409,81 @@ val staticMemberValue = Toto.MY_STATIC_MEMBER
 
 ### Héritage
 
-Pour pouvoir hériter d'une classe : mot-clé `open`
+#### Open class
+
+Par défaut, une classe ne peut pas être étendue en Kotlin. Si l'on souhaite créer des classes filles depuis cette classe, il faut le spécifier directement avec le mot-clé `open`.
+
+```kotlin
+import java.time.Duration
+import java.time.LocalDateTime
+import java.util.Currency
+
+open class Tool(
+    protected val name: String,
+    protected val type: Type,
+    private var stock: Int
+) {
+    enum class Type { SCREWDRIVER, HAMMER, DRILL }
+
+    fun isAvailable(): Boolean = stock > 0
+    fun decreaseStock() {
+        stock--
+    }
+}
+
+class SellableTool(
+    private var price: Price,
+    name: String,
+    type: Type,
+    stock: Int
+) : Tool(name, type, stock) {
+    
+    data class Price(val amount: Double, val currency: Currency)
+
+    fun updatePrice(amount: Double) {
+        this.price = Price(amount, this.price.currency)
+    }
+}
+
+class RentableTool(
+    private val rentDuration: Duration,
+    name: String,
+    type: Type,
+    stock: Int
+) : Tool(name, type, stock) {
+    
+    fun shouldBeReturned(rentalDateTime: LocalDateTime, currentDateTime: LocalDateTime): Boolean {
+        val dueDateTime = rentalDateTime.plus(rentDuration)
+        return currentDateTime.isAfter(dueDateTime)
+    }
+}
+```
+
+Dans l'exemple, la classe `Tool` est étendue en deux sous-classes `SellableTool` et `RentableTool` avec des logiques spécifiques. Une partie du comportement (infos de base sur l'outil, gestion des stocks) est mutualisée. Pour garantir le comportement de base, on doit faire appel au constructeur de la classe mère `Tool` au moment de la construction des classes filles, d'où les deux lignes `Tool(name, type, stock)`.
+
+#### Abstract class
+
+Une `abstract class` n'est destinée qu'à créer des classes filles, et ne pourra pas être instanciée directement. On l'utilise quand les comportements mutualisés ne sont pas autoportants sans spécification via l'héritage.
 
 Un membre non défini dans la classe mère (cf. `logPrefix` ci-dessous) doit être déclaré `abstract`.
 
 ```kotlin
-open class Logger {
-    private abstract val logPrefix: String
+abstract class Logger {
+    protected abstract val logPrefix: String
 
-    fun log(val message: String) {
-        print("$logPrefix: $message")
+    fun log(message: String) {
+        println("$logPrefix: $message")
     }
 }
 
-class DebugLogger: Logger {
-    private override val logPrefix = "DEBUG"
+class DebugLogger: Logger() {
+    override val logPrefix = "DEBUG"
 }
 
+// Ailleurs dans l'application
 val debugLogger = DebugLogger()
 debugLogger.log("my first log message")
-// "Debug: my first log message"
+// "DEBUG: my first log message"
 ```
 
 ### Mots-clés de classe
@@ -743,12 +798,12 @@ val updatedShoppingList = shoppingList.addEssentialStuff()
 `apply` est particulièrement adapté lorsqu'on souhaite rendre une méthode chaînable. Dans l'exemple ci-dessus, on pourrait imaginer
 
 ```kotlin
-val remainingBeersWhenStolenSlippers = shoppingList
+val remainingBeers = shoppingList
     .addEssentialStuff()
-    .filter { it.name == "Pair of Slippers" }
+    .filter { it.name == "Beer keg" }
     .map { it.quantity }
     .first()
-// remainingBeersWhenStolenSlippers: 7
+// remainingBeers: 7
 ```
 
 ### also() : TODO
@@ -756,3 +811,8 @@ val remainingBeersWhenStolenSlippers = shoppingList
 ```
 TODO also()
 ```
+
+## Compléments à cette sheet
+
+- Visibilité de champs / méthodes dans une classe (`private`, `protected`, public)
+- Constructeur primaire / secondaire
