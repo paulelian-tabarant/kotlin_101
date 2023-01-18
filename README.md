@@ -750,7 +750,7 @@ val loggingFormattedDate = retrieveDatadogFormattedConsumptionDate()
 
 ## Scope Functions
 
-Parmi les standards de Kotlin, on retrouve plusieurs fonctions qui ont pour seule responsabilité d'exécuter du code dans le contexte d'un objet.
+Parmi les standards de Kotlin, on retrouve plusieurs fonctions qui ont pour seule responsabilité d'exécuter du code dans le contexte d'un objet. Ce sont des méthodes déjà présentes nativement sur tout objet Kotlin.
 
 ### with()
 
@@ -806,10 +806,35 @@ pokemonRestResource = Pokemon {
 
 Dans le scope de `with(pokemon)`, on accède aux champs de `pokemon` directement via `field` au lieu de `pokemon.field` habituellement. Cela permet d'éviter une suite de `pokemon.` redondants dans cette fonction qui de toute manière n'utilise que des champs de cet objet.
 
-### let() : TODO
+### let()
 
+`let` donne accès à l'objet sur lequel il est appelé via `it`. La dernière instruction du `let` fait office de retour du bloc, sans `return` explicite. La fonction prend tout son sens lorsqu'on veut se passer d'une variable intermédiaire dans une série d'instructions.
+
+```kotlin
+import java.time.Duration
+import java.time.LocalDate
+import java.time.Year
+
+data class Movie(val id: Int, val title: String, val releaseDate: LocalDate)
+data class MovieRestResource(val id: Int, val title: String, val releaseDate: String)
+
+interface MovieRepository {
+    fun find(id: Int): Movie
+}
+
+// Au niveau d'un endpoint HTTP GET /movies/:id
+fun getMovie(val id: Int, movieRepository: MovieRepository): MovieRestResource =
+    movieRepository.find(id).let {
+        MovieRestResource(it.id, it.title, it.releaseDate)
+    }
 ```
-TODO let()
+
+Le paramètre `it` peut aussi être spécifié explicitement.
+
+```kotlin
+movieRepository.find(id).let { movie ->
+    MovieRestResource(movie.id, movie.title, movie.releaseDate.toString())
+}
 ```
 
 ### run() : TODO
