@@ -752,11 +752,59 @@ val loggingFormattedDate = retrieveDatadogFormattedConsumptionDate()
 
 Parmi les standards de Kotlin, on retrouve plusieurs fonctions qui ont pour seule responsabilité d'exécuter du code dans le contexte d'un objet.
 
-### with() : TODO
+### with()
 
+`with()` avec l'objet sur lequel il s'applique, permet d'exécuter un bloc de code en ayant accès à l'objet via `this` sans forcément le spécifier explicitement. À prescrire quand on accède à plusieurs champs d'un objet et qu'il est évident qu'on utilise ses champs sur une série d'instructions. La dernière instruction du bloc fait office du retour du `with`.
+
+```kotlin
+import README.Pokemon.Generation.ONE
+
+data class Pokemon(
+    val name: String,
+    val healthPoints: Int,
+    val description: String,
+    val generation: Generation
+) {
+    enum class Generation(val label: String) { ONE("One"), TWO("Two"), THREE("Three") }
+}
+
+data class PokemonRestResource(
+    val name: String,
+    val healthPoints: String,
+    val description: String,
+    val generation: String
+) {
+    companion object {
+        fun of(pokemon: Pokemon) = with(pokemon) {
+            PokemonRestResource(
+                name,
+                healthPoints.toString(),
+                description,
+                generation.label
+            )
+        }
+    }
+}
+
+val pokemon = Pokemon(
+    name = "Mew",
+    healthPoints = 70,
+    description = "Mew is a Psychic-type Mythical and Legendary Pokémon.",
+    generation = ONE
+)
+
+val pokemonRestResource = PokemonRestResource.of(pokemon)
+/*
+pokemonRestResource = Pokemon {
+    name = "Mew",
+    healthPoints = "70",
+    description = "Mew is a Psychic-type Mythical and Legendary Pokémon.",
+    generation = "One"
+}
+ */
 ```
-TODO with()
-```
+
+Dans le scope de `with(pokemon)`, on accède aux champs de `pokemon` directement via `field` au lieu de `pokemon.field` habituellement. Cela permet d'éviter une suite de `pokemon.` redondants dans cette fonction qui de toute manière n'utilise que des champs de cet objet.
 
 ### let() : TODO
 
