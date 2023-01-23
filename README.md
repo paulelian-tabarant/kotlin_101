@@ -754,7 +754,11 @@ Parmi les standards de Kotlin, on retrouve plusieurs fonctions qui ont pour seul
 
 ### with()
 
-`with()` avec l'objet sur lequel il s'applique, permet d'exécuter un bloc de code en ayant accès à l'objet via `this` sans forcément le spécifier explicitement. À prescrire quand on accède à plusieurs champs d'un objet et qu'il est évident qu'on utilise ses champs sur une série d'instructions. La dernière instruction du bloc fait office du retour du `with`.
+`with()`, avec l'objet sur lequel il s'applique passé en paramètre, permet d'exécuter un bloc de code en ayant accès à l'objet via `this` sans forcément le spécifier explicitement.
+
+À prescrire quand on accède à **plusieurs champs d'un objet** et qu'il est évident qu'on utilise ses champs sur une série d'instructions. La dernière instruction du bloc fait office du retour du `with`.
+
+Contrairement aux autres *scope functions*, `with` ne s'applique pas à l'objet avec la syntaxe `objet.function { }`. Il restreint le scope à l'objet passé entre parenthèses du `with()`.
 
 ```kotlin
 import README.Pokemon.Generation.ONE
@@ -832,20 +836,48 @@ fun getMovie(val id: Int, movieRepository: MovieRepository): MovieRestResource =
 Le paramètre `it` peut aussi être spécifié explicitement.
 
 ```kotlin
-movieRepository.find(id).let { movie ->
+val movieRestResource = movieRepository.find(id).let { movie ->
     MovieRestResource(movie.id, movie.title, movie.releaseDate.toString())
 }
 ```
 
-### run() : TODO
+### run()
 
+`run` donne accès à l'objet sur lequel la fonction est appelée via `this`, et renvoie la dernière expression définie entre les accolades `{}`.
+
+```kotlin
+val movieRestResource = movieRepository.find(id).run { movie ->
+    MovieRestResource(id, title, releaseDate.toString())
+}
 ```
-TODO run()
+
+Il ressemble beaucoup au `let`, mis à part que le `let` donne accès à l'objet via `it` et qu'il s'appelle forcément sur un objet avec la syntaxe `objet.let { }` : `run` peut aussi être utilisé pour grouper une série d'instructions en une seule, là où l'on ne pourrait pas le faire autrement.
+
+```kotlin
+data class Song(val artist: String, val title: String, val genre: Genre) {
+    enum class Genre { ROCK, RAP, POP, FOLK }
+}
+
+interface Logger {
+    fun log(message: String)
+}
+
+interface SongRepository {
+    fun find(title: String): Song?
+}
+
+fun getSong(title: String, songRepository: SongRepository, logger: Logger): Song =
+    songRepository.find(id) ?: run {
+        logger.log("Unknown song : $title")
+        throw UnknownSongException(title)
+    }
 ```
+
+Sans `run`, il aurait été impossible de combiner deux instructions à droite de l'*Elvis Operator* `?:`.
 
 ### apply()
 
-L'objet est disponible en tant que `this` et il se retourne lui-même.
+L'objet est disponible en tant que `this` et se retourne lui-même.
 
 ```kotlin
 data class Product(
@@ -868,7 +900,7 @@ val updatedShoppingList = shoppingList.addEssentialStuff()
 
 ```
 
-`apply` est particulièrement adapté lorsqu'on souhaite rendre une méthode chaînable. Dans l'exemple ci-dessus, on pourrait imaginer
+`apply` est particulièrement adapté lorsqu'on souhaite chainer la fonction définie en continuer à désigner le même objet en tant que résultat de l'appel de fonction. Dans l'exemple ci-dessus, on pourrait imaginer
 
 ```kotlin
 val remainingBeers = shoppingList
@@ -878,6 +910,8 @@ val remainingBeers = shoppingList
     .first()
 // remainingBeers: 7
 ```
+
+Note : `filter` et `map` sont nativement chainables.
 
 ### also() : TODO
 
