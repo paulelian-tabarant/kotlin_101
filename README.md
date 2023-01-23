@@ -1,5 +1,56 @@
 # Kotlin 101
 
+<!-- TOC -->
+
+* [Syntaxe de base](#syntaxe-de-base)
+    * [Variable](#variable)
+        * [Constante](#constante)
+        * [Ré-assignable](#ré-assignable)
+        * [Nullable](#nullable)
+        * [Chaînes de caractère](#chaînes-de-caractère)
+    * [Structures de contrôle](#structures-de-contrôle)
+        * [if](#if)
+        * [when](#when)
+        * [Opérateurs sur variables nullables](#opérateurs-sur-variables-nullables)
+    * [Itérer sur des collections d'objets](#itérer-sur-des-collections-dobjets)
+        * [map](#map)
+        * [flatMap](#flatmap)
+        * [filter](#filter)
+        * [groupBy](#groupby)
+        * [reduce](#reduce)
+    * [Fonctions](#fonctions)
+        * [Déclaration classique](#déclaration-classique)
+        * [En une ligne](#en-une-ligne)
+        * [Argument par défaut](#argument-par-défaut)
+        * [Argument nullable](#argument-nullable)
+        * [Paramètres nommés](#paramètres-nommés)
+* [Classes](#classes)
+    * [Évolutions depuis Java](#évolutions-depuis-java)
+    * [Déclaration complète](#déclaration-complète)
+    * [Variables statiques](#variables-statiques)
+    * [Héritage](#héritage)
+        * [Open class](#open-class)
+        * [Abstract class](#abstract-class)
+    * [Mots-clés de classe](#mots-clés-de-classe)
+        * [data class](#data-class)
+        * [enum class](#enum-class)
+        * [sealed class](#sealed-class)
+        * [value class](#value-class)
+        * [object](#object)
+    * [Surcharge d'opérateurs](#surcharge-dopérateurs)
+    * [Extension de méthode](#extension-de-méthode)
+* [Interfaces](#interfaces)
+    * [Déclaration](#déclaration)
+* [Scope Functions](#scope-functions)
+    * [with() { }](#with----)
+    * [.let { }](#let--)
+    * [.run { }](#run--)
+    * [.apply { }](#apply--)
+    * [.also { }](#also--)
+* [Compléments à cette sheet](#compléments-à-cette-sheet)
+
+<!-- TOC -->
+
 ## Syntaxe de base
 
 ### Variable
