@@ -1093,3 +1093,5 @@ de `rentableBookRepository.find(isbn)`.
 
 - Visibilité de champs / méthodes dans une classe (`private`, `protected`, public)
 - Constructeur primaire / secondaire
+- Utilisation des coroutines
+- Gestion des exceptions avec `runCatching`
