@@ -80,13 +80,16 @@ message = "hello, world"
 
 #### Nullable
 
-Faire suivre le type de variable du caractère `?` indique au compilateur que sa valeur peut être `null`. Le langage ne permettra pas d'exécuter un appel de méthode directement sur une variable nullable, pour se couvrir des `NullPointerException`.
+Faire suivre le type de variable du caractère `?` indique au compilateur que sa valeur peut être `null`. Le langage ne
+permettra pas d'exécuter un appel de méthode directement sur une variable nullable, pour se couvrir
+des `NullPointerException`.
 
 ```kotlin
 val nullableString: String? = stringRepository.findBy("string_id")
 
 nullableString.chars() // Ne compilera pas
 ```
+
 Comme il n'est pas possible de faire un appel sur un objet nullable, on utilise des branchements conditionnels pour
 gérer les deux cas de figure (la variable est `null`, et le cas inverse, cf.
 [Opérateurs sur variables nullables](#opérateurs-sur-variables-nullables))
@@ -105,7 +108,8 @@ val message = "Welcome home, $username !"
 
 #### if
 
-La spécificité du `if` en Kotlin est que chaque embranchement peut renvoyer une valeur directement assignable à une variable. Cette syntaxe peut être utilisée en remplacement de l'opérateur ternaire (`?`..`:`) de Java, absent en Kotlin.
+La spécificité du `if` en Kotlin est que chaque embranchement peut renvoyer une valeur directement assignable à une
+variable. Cette syntaxe peut être utilisée en remplacement de l'opérateur ternaire (`?`..`:`) de Java, absent en Kotlin.
 
 ```kotlin
 val minQuantity = productsRepository.find(productId).minQuantity
@@ -130,7 +134,8 @@ fun getMentionBac(averageMark: Double): String =
     }
 ```
 
-Dans le cas ci-dessus, `when` est décliné en fonction des valeurs de la variable `model`. Si les différents cas ne sont pas
+Dans le cas ci-dessus, `when` est décliné en fonction des valeurs de la variable `model`. Si les différents cas ne sont
+pas
 réduits à l'état d'une seule variable, il est aussi possible d'adopter la syntaxe suivante.
 
 ```kotlin
@@ -146,43 +151,46 @@ fun calculate(val op1: Double, val op2: Double, val operator: String) =
 
 #### Opérateurs sur variables nullables
 
-L'*Elvis operator* `?:` a été introduit essentiellement pour s'abstraire des blocs conditionnels du type
+L'*Elvis operator* `?:` a été introduit essentiellement pour éviter les blocs conditionnels de ce type.
 
 ```kotlin
 if (variable == null) doSomethingWhenNull()
 ```
 
-L'*Elvis Operator* permet d'arriver au même résultat avec la syntaxe suivante
+L'*Elvis Operator* permet d'arriver au même résultat avec la syntaxe suivante.
 
 ```kotlin
 variable ?: doSomethingWhenNull()
 ```
 
-Les variables nullables permettent aussi de récupérer la valeur d'un champ uniquement si l'objet nullable est
-non `null`, avec la syntaxe `?.`. À noter que comme pour le branchement `if`, les deux cas (`null` ou non) renvoient un
+Les variables nullables permettent aussi de récupérer la valeur d'un champ uniquement si l'objet nullable n'est pas
+`null`, avec la syntaxe `?.`. À noter que comme pour le branchement `if`, les deux cas (`null` ou non) renvoient un
 résultat assignable à une variable.
 
 ```kotlin
 data class Movie(val title: String, val description: String)
 
-class MovieRepository {
-    fun find(name: String): Movie? { /* ... */ }
+interface MovieRepository {
+    fun find(name: String): Movie?
 }
 
-// Quelque part dans une autre classe
 val movie = movieRepository.find("Three Billboards outside Ebbing, Missouri")
+// Si le film a une description, renvoie la description. Sinon, renvoie une String vide
 val description = movie?.description ?: ""
 ```
 
 ### Itérer sur des collections d'objets
 
-Kotlin dispose de plusieurs fonctions utilitaires sur des collections qui permettent de s'abstraire des traditionnelles
-boucles `for` dans la majorité des cas. À chaque fois, le résultat renvoie une *copie* sans modifier le contenu de la
+Kotlin, comme Java, dispose de plusieurs fonctions utilitaires sur des collections qui permettent de s'abstraire des
+traditionnelles
+boucles `for` dans la majorité des cas. La plupart de ces fonctions prennent une *lambda
+function* (`(...args) -> { instructions }`) en paramètre, autrement dit une opération à appliquer à chaque élément pour
+calculer la liste résultat. À chaque fois, le résultat renvoie une *copie* sans modifier le contenu de la
 collection d'entrée.
 
-Chaque élément de la collection initiale est accessible directement par la dénomination `it`.
+Chaque élément de la collection source est accessible directement avec `it`.
 
-#### map
+#### .map { }
 
 `map` transforme une collection d'entrée en appliquant la même opération à chaque élément, dans l'exemple ci-dessous, ne
 conserver que le champ `label` des objets `Product`.
@@ -196,8 +204,8 @@ val productLabels = products.map { it.label }
 
 #### flatMap
 
-Lorsqu'on doit agréger plusieurs listes entre elles, contenues dans chaque élément de la collection initiale,
-l'opérateur `flatMap` devient pertinent.
+`flatMap` permet d'itérer non pas sur les éléments d'une liste, mais sur une *liste d'éléments contenus dans un élément*
+de la liste source. L'ensemble des listes transformées est concaténé dans une seule et même liste.
 
 ```kotlin
 data class CarBrand(
@@ -208,15 +216,19 @@ data class CarBrand(
 val carBrands: List<CarBrand> = availableBrandsRepository.findAll()
 /*
 carBrands = [
-CarBrand { name = "Renault", models = [ Model("Mégane"), Model ("Scénic") ] },
-CarBrand { name = "Fiat", models = Model("Punto") }
+    CarBrand { name = "Renault", models = [ Model("Mégane"), Model ("Scénic") ] },
+    CarBrand { name = "Fiat", models = Model("Punto") }
 ]
 */
 val carModels = carBrands.flatMap { it.models }
 // carModels = [ Model("Mégane"), Model("Scénic"), Model("Punto") ]
 ```
 
-#### filter
+Ici, on souhaite obtenir une liste *aplatie* contenant tous les modèles des différentes marques de voiture. L'objet
+source est une liste de marques, chacune contenant une liste de modèles. Le `flatMap` permet d'éviter d'imbriquer
+deux `map` pour parvenir au résultat souhaité : obtenir une seule liste agrégée à partir des modèles de chaque marque.
+
+#### .filter { }
 
 Quand on l'applique à une collection, `filter`  ne conserver que les éléments qui vérifient l'assertion passée entre
 accolades.
@@ -229,19 +241,21 @@ data class Movie(val title: String, val countryCode: IsoCountryCode)
 val movies: List<Movie> = moviesRepository.findAll()
 /*
 movies = [
-Movie { title = "The hateful Eight", countryCode = "US" },
-Movie { title  = "Intouchables", countryCode = "FR" },
-Movie { title  = "I, Daniel Blake", countryCode = "UK" }
+    Movie { title = "The hateful Eight", countryCode = "US" },
+    Movie { title  = "Intouchables", countryCode = "FR" },
+    Movie { title  = "I, Daniel Blake", countryCode = "UK" }
 ]
 */
 val frenchMovies = movies.filter { it.countryCode == IsoCountryCode.valueOf("FR") }
 // frenchMovies = [ Movie { title  = "Intouchables", countryCode = "FR" } ]
 ```
 
-#### groupBy
+Ici, on ne conserve que les *films français* dans la liste destination.
+
+#### .groupBy { }
 
 Quand on cherche à classer les éléments d'une liste selon la valeur d'un champ des éléments, `groupBy` génère une `Map`
-avec comme clé la valeur du champ, et comme valeur les éléments ayant le champ concerné à cette valeur.
+avec comme clé la *valeur du champ*, et comme valeur les éléments ayant le champ concerné à cette valeur.
 
 ```kotlin
 data class Pokemon(val name: String, var healthPoints: Int) {
@@ -261,11 +275,12 @@ fun hitPokemon(name: String, deck: List<Pokemon>, power: Double) {
     val deckByName = deck.groupBy { it.name }
     /*
      {
-         "Charmander" -> Pokemon("Charmander", 120) 
-         "Butterfree" -> Pokemon("Butterfree", 100) 
-         "Sandslash" -> Pokemon("Sandslash", 70) 
+         "Charmander" -> [ Pokemon("Charmander", 120) ]
+         "Butterfree" -> [ Pokemon("Butterfree", 100) ]
+         "Sandslash" -> [ Pokemon("Sandslash", 70) ]
      }
     */
+    // Ici, on peut accéder au Pokémon sur lequel appliquer "hit" via le dictionnaire
     deckByName[name]?.hit(20.0) ?: throw PokemonNotInDeckException(name)
 }
 
@@ -279,7 +294,9 @@ deck = [
  */
 ```
 
-#### reduce
+Avec `groupBy`, la liste de `Pokemon` est regroupée par leur nom. À noter que si deux `Pokemon` avaient le nom `"Charmander"` (ce qui paraît improbable dans ce cas d'usage, vous en conviendrez), la liste associée à cette clé aurait deux éléments à l'intérieur.
+
+#### .reduce { }
 
 `reduce` s'utilise pour agréger tous les éléments d'une liste en un seul afin d'obtenir un résultat. Les éléments sont
 ajoutés à un *accumulateur* qui stocke les résultats successifs au fur et à mesure que l'opération souhaitée est
