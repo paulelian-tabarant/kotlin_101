@@ -80,29 +80,21 @@ message = "hello, world"
 
 #### Nullable
 
-Faire suivre le type de variable du caractère `?` indique au compilateur que sa valeur peut être `null`. Le langage ne
-permettra pas d'exécuter un appel de méthode directement sur une variable nullable.
-
-```kotlin
-val nullableString: String? = null
-
-nullableString.chars() // Ne compilera pas
-```
-
-Comme il n'est pas possible de faire un appel sur un objet nullable, on utilise des branchements conditionnels pour
-gérer les deux cas de figure (la variable est `null`, et le cas inverse)
+Faire suivre le type de variable du caractère `?` indique au compilateur que sa valeur peut être `null`. Le langage ne permettra pas d'exécuter un appel de méthode directement sur une variable nullable, pour se couvrir des `NullPointerException`.
 
 ```kotlin
 val nullableString: String? = stringRepository.findBy("string_id")
-```
 
-Il est possible de vérifier très facilement la valeur `null` d'une variable en Kotlin (cf. section X sur l'Elvis
-operator).
+nullableString.chars() // Ne compilera pas
+```
+Comme il n'est pas possible de faire un appel sur un objet nullable, on utilise des branchements conditionnels pour
+gérer les deux cas de figure (la variable est `null`, et le cas inverse, cf.
+[Opérateurs sur variables nullables](#opérateurs-sur-variables-nullables))
 
 #### Chaînes de caractère
 
-Kotlin ajoute une fonctionnalité d'*interpolation* aux variables de type `String`, qui insère des valeurs dynamiques à
-l'intérieur d'une chaîne de caractères en dur en utilisant `$`.
+Kotlin ajoute l'*interpolation* des variables de type `String`. Pour insérer des valeurs dynamiques à
+l'intérieur d'une chaîne de caractères en dur, utiliser `$` suivi de la variable stockant la valeur.
 
 ```kotlin
 val username: String = authenticatedUserProvider.getName()
@@ -113,7 +105,7 @@ val message = "Welcome home, $username !"
 
 #### if
 
-La spécificité du `if` en Kotlin est que chaque issue possible est directement assignable à une variable.
+La spécificité du `if` en Kotlin est que chaque embranchement peut renvoyer une valeur directement assignable à une variable. Cette syntaxe peut être utilisée en remplacement de l'opérateur ternaire (`?`..`:`) de Java, absent en Kotlin.
 
 ```kotlin
 val minQuantity = productsRepository.find(productId).minQuantity
@@ -122,32 +114,23 @@ val computedQuantity = if (requestedQuantity < minQuantity) minQuantity else req
 
 #### when
 
-Comme un `switch / case` dans d'autres langages, le `when` est utile lorsque plus de deux comportements sont souhaités
-selon l'état d'une variable.
+Comme un `switch / case` en Java, le `when` est utile lorsque plus de deux comportements sont souhaités
+selon l'état d'une variable. Comme le `if`, chaque embranchement peut renvoyer un résultat.
 
 ```kotlin
-data class Renault
-data class Citroen
-data class Ford
-
-class CarFactory {
-    enum class Model {
-        RENAULT,
-        CITROEN,
-        FORD
+fun getMentionBac(averageMark: Double): String =
+    // Chaque embranchement renvoie une chaîne de caractères
+    when (averageMark) {
+        this < 10 -> "Try again !"
+        this > 10 && this < 12 -> "Tout juste !"
+        this > 12 && this < 14 -> "Assez bien"
+        this > 14 && this < 16 -> "Bien"
+        this > 16 && this < 20 -> "Très bien"
+        this > 20 -> "Tu passes dans le journal"
     }
-
-    fun buildModel(model: Model) =
-        when (model) {
-            RENAULT -> Renault()
-            CITROEN -> Citroen()
-            FORD -> Ford()
-            else -> throw UnknownModelException("model cannot be built")
-        }
-}
 ```
 
-Dans le cas ci-dessus, `when` est utilisé avec le scope de la variable `model`. Si les différents cas ne sont pas
+Dans le cas ci-dessus, `when` est décliné en fonction des valeurs de la variable `model`. Si les différents cas ne sont pas
 réduits à l'état d'une seule variable, il est aussi possible d'adopter la syntaxe suivante.
 
 ```kotlin
@@ -182,9 +165,8 @@ résultat assignable à une variable.
 ```kotlin
 data class Movie(val title: String, val description: String)
 
-class MovieRepository() {
-    fun find(name: String): Movie? { /* ... */
-    }
+class MovieRepository {
+    fun find(name: String): Movie? { /* ... */ }
 }
 
 // Quelque part dans une autre classe
@@ -1094,4 +1076,4 @@ de `rentableBookRepository.find(isbn)`.
 - Visibilité de champs / méthodes dans une classe (`private`, `protected`, public)
 - Constructeur primaire / secondaire
 - Utilisation des coroutines
-- Gestion des exceptions avec `runCatching`
+- Gestion des exceptions, et spécificités avec `runCatching`
