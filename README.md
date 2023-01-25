@@ -206,10 +206,12 @@ data class CarBrand(
 )
 
 val carBrands: List<CarBrand> = availableBrandsRepository.findAll()
-// carBrands = [ 
-//      CarBrand { name = "Renault", models = [ Model("Mégane"), Model ("Scénic") ] },
-//      CarBrand { name = "Fiat", models = Model("Punto") }
-// ]
+/*
+carBrands = [
+CarBrand { name = "Renault", models = [ Model("Mégane"), Model ("Scénic") ] },
+CarBrand { name = "Fiat", models = Model("Punto") }
+]
+*/
 val carModels = carBrands.flatMap { it.models }
 // carModels = [ Model("Mégane"), Model("Scénic"), Model("Punto") ]
 ```
@@ -225,15 +227,15 @@ import java.util.Locale.IsoCountryCode
 data class Movie(val title: String, val countryCode: IsoCountryCode)
 
 val movies: List<Movie> = moviesRepository.findAll()
-// movies = [ 
-//      Movie { title = "The hateful Eight", countryCode = "US" },
-//      Movie { title  = "Intouchables", countryCode = "FR" },
-//      Movie { title  = "I, Daniel Blake", countryCode = "UK" }
-// ]
+/*
+movies = [
+Movie { title = "The hateful Eight", countryCode = "US" },
+Movie { title  = "Intouchables", countryCode = "FR" },
+Movie { title  = "I, Daniel Blake", countryCode = "UK" }
+]
+*/
 val frenchMovies = movies.filter { it.countryCode == IsoCountryCode.valueOf("FR") }
-// frenchMovies = [
-//      Movie { title  = "Intouchables", countryCode = "FR" },
-// ]
+// frenchMovies = [ Movie { title  = "Intouchables", countryCode = "FR" } ]
 ```
 
 #### groupBy
@@ -247,28 +249,34 @@ data class Pokemon(val name: String, var healthPoints: Int) {
 }
 
 val deck: List<Pokemon> = pokemonDeckProvider.getRandom()
-// deck = [
-//      Pokemon { "Charmander", 120 },
-//      Pokemon {"Butterfree", 100 },
-//      Pokemon { "Sandslash", 70 }
-// ]
+/*
+ deck = [
+      Pokemon { "Charmander", 120 },
+      Pokemon {"Butterfree", 100 },
+      Pokemon { "Sandslash", 70 }
+ ]
+*/
 
 fun hitPokemon(name: String, deck: List<Pokemon>, power: Double) {
     val deckByName = deck.groupBy { it.name }
-    // {
-    //     "Charmander" -> Pokemon("Charmander", 120) 
-    //     "Butterfree" -> Pokemon("Butterfree", 100) 
-    //     "Sandslash" -> Pokemon("Sandslash", 70) 
-    // }
+    /*
+     {
+         "Charmander" -> Pokemon("Charmander", 120) 
+         "Butterfree" -> Pokemon("Butterfree", 100) 
+         "Sandslash" -> Pokemon("Sandslash", 70) 
+     }
+    */
     deckByName[name]?.hit(20.0) ?: throw PokemonNotInDeckException(name)
 }
 
 hitPokemon("Sandlash", deck, 20.0)
-// deck = [
-//      Pokemon { "Charmander", 120 },
-//      Pokemon { "Butterfree", 100 },
-//      Pokemon { "Sandslash", 50 }
-// ]
+/*
+deck = [
+      Pokemon { "Charmander", 120 },
+      Pokemon { "Butterfree", 100 },
+      Pokemon { "Sandslash", 50 }
+]
+ */
 ```
 
 #### reduce
